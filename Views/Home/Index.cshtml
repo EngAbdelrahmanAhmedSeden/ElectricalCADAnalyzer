@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = "Network topology workspace";
+}
+
+<header class="app-header">
+    <a class="brand" href="./" aria-label="CircuitCAD home">
+        <svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="7" cy="18" r="3"/><circle cx="29" cy="7" r="3"/><circle cx="29" cy="29" r="3"/><path d="M10 16 26 8M10 20l16 8M29 10v16"/></svg>
+        <span>CIRCUIT<span>CAD</span></span>
+    </a>
+    <button class="text-button" id="guideButton" type="button">Notation & guide <span aria-hidden="true">↗</span></button>
+</header>
+
+<main>
+    <section class="intro" aria-labelledby="pageTitle">
+        <div>
+            <p class="section-label">ELECTRICAL NETWORK TOPOLOGY</p>
+            <h1 id="pageTitle">From graph to solution.</h1>
+        </div>
+        <p>Build a directed network, choose a tree, and calculate its topology matrices and DC branch response in one pass.</p>
+    </section>
+
+    <section class="workspace" aria-label="Circuit editor">
+        <div class="graph-panel">
+            <div class="panel-heading">
+                <div><span class="step">01</span><h2>Network graph</h2></div>
+                <div class="graph-actions">
+                    <button class="icon-button" id="autoLayoutButton" type="button" title="Arrange nodes evenly" aria-label="Arrange nodes evenly">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="18" cy="19" r="2"/><path d="m7 11 9-5M7 13l9 5"/></svg>
+                    </button>
+                    <button class="small-button" id="addNodeButton" type="button">+ Add node</button>
+                </div>
+            </div>
+            <div class="graph-stage" id="graphStage">
+                <svg id="graphSvg" viewBox="0 0 720 460" role="img" aria-labelledby="graphTitle graphDescription">
+                    <title id="graphTitle">Directed circuit graph</title>
+                    <desc id="graphDescription">Nodes and directed branches. Drag nodes to rearrange the graph.</desc>
+                    <defs>
+                        <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L8,3.5 z" class="arrow-fill"/></marker>
+                        <marker id="arrowTree" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,7 L8,3.5 z" class="tree-fill"/></marker>
+                    </defs>
+                    <g id="edgeLayer"></g><g id="nodeLayer"></g>
+                </svg>
+                <div class="graph-legend"><span><i class="legend-line directed"></i>Branch direction</span><span id="treeLegend" hidden><i class="legend-line twig"></i>Tree branch</span></div>
+                <span class="canvas-note">DRAG NODES TO ARRANGE</span>
+            </div>
+            <div class="graph-caption"><span id="graphStats">4 nodes · 6 branches</span><span>Arrow: from → to</span></div>
+        </div>
+
+        <div class="input-panel">
+            <div class="panel-heading">
+                <div><span class="step">02</span><h2>Branch data</h2></div>
+                <select id="exampleSelect" aria-label="Load an example circuit">
+                    <option value="">Load example</option>
+                    <option value="lecture">Lecture network</option>
+                    <option value="bridge">Bridge network</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table class="input-table">
+                    <thead><tr><th>Branch</th><th>From</th><th>To</th><th>Z (Ω)</th><th>E (V)</th><th>I (A)</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                    <tbody id="branchTableBody"></tbody>
+                </table>
+            </div>
+            <button class="add-branch" id="addBranchButton" type="button">+ Add branch</button>
+            <div class="analysis-settings">
+                <label>Reference node<select id="referenceSelect"></select></label>
+                <fieldset>
+                    <legend>Tree selection</legend>
+                    <div class="segmented"><label><input type="radio" name="treeMode" value="auto" checked><span>Automatic</span></label><label><input type="radio" name="treeMode" value="manual"><span>Manual</span></label></div>
+                </fieldset>
+            </div>
+            <div id="treePicker" class="tree-picker" hidden><p>Select exactly <strong id="requiredTwigs">3</strong> connected branches with no loops.</p><div id="treeOptions"></div></div>
+            <div class="solve-row">
+                <p id="inputHint">All impedance values must be greater than zero.</p>
+                <button class="primary-button" id="analyzeButton" type="button"><span>Analyze circuit</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+            </div>
+        </div>
+    </section>
+
+    <div class="message" id="message" role="status" aria-live="polite" hidden></div>
+
+    <section class="results" id="resultsSection" aria-labelledby="resultsTitle">
+        <div class="results-heading">
+            <div><span class="step">03</span><h2 id="resultsTitle">Analysis results</h2></div>
+            <div class="verification" id="verificationBadge"><span></span>Awaiting analysis</div>
+        </div>
+        <div class="result-summary" id="resultSummary">
+            <div><span>Reference</span><strong>—</strong></div><div><span>Twigs</span><strong>—</strong></div><div><span>Links</span><strong>—</strong></div><div><span>KCL residual</span><strong>—</strong></div>
+        </div>
+        <div class="result-tabs" role="tablist" aria-label="Result views">
+            <button role="tab" id="tab-matrices" aria-controls="panel-matrices" aria-selected="true" data-tab="matrices" type="button">Topology matrices</button>
+            <button role="tab" id="tab-electrical" aria-controls="panel-electrical" aria-selected="false" data-tab="electrical" type="button">Currents & voltages</button>
+            <button role="tab" id="tab-equations" aria-controls="panel-equations" aria-selected="false" data-tab="equations" type="button">Equations & checks</button>
+        </div>
+        <div id="panel-matrices" role="tabpanel" aria-labelledby="tab-matrices" class="tab-panel"></div>
+        <div id="panel-electrical" role="tabpanel" aria-labelledby="tab-electrical" class="tab-panel" hidden></div>
+        <div id="panel-equations" role="tabpanel" aria-labelledby="tab-equations" class="tab-panel" hidden></div>
+    </section>
+</main>
+
+<footer><span>CircuitCAD / Network topology calculator</span><span>Engineer Abdelrahman Ahmed and his team</span></footer>
+
+<dialog id="guideDialog" aria-labelledby="guideTitle">
+    <div class="dialog-heading"><h2 id="guideTitle">Notation & sign convention</h2><button class="icon-button" id="closeGuideButton" type="button" aria-label="Close guide">×</button></div>
+    <div class="guide-content">
+        <p>Each directed branch runs <strong>from → to</strong>. A positive branch current follows that arrow; a positive branch voltage is a drop in that direction.</p>
+        <div class="formula">V<sub>b</sub> = Z<sub>b</sub>(J<sub>b</sub> + I<sub>b</sub>) − E<sub>b</sub></div>
+        <dl><div><dt>Z</dt><dd>Branch impedance (resistance for this DC solver), in ohms.</dd></div><div><dt>E</dt><dd>Voltage-source rise along the branch direction, in volts.</dd></div><div><dt>I</dt><dd>Current source opposing positive branch current, in amperes.</dd></div></dl>
+        <h3>Matrix conventions</h3>
+        <p>The incidence matrix uses <strong>+1</strong> when a branch leaves a node and <strong>−1</strong> when it enters. Tie-set and cut-set columns are ordered as <strong>twigs first, links second</strong>.</p>
+        <div class="formula">A J<sub>b</sub> = 0 &nbsp;·&nbsp; B V<sub>b</sub> = 0 &nbsp;·&nbsp; J<sub>b</sub> = B<sup>T</sup>I<sub>L</sub> &nbsp;·&nbsp; V<sub>b</sub> = C<sup>T</sup>E<sub>N</sub></div>
+        <p class="guide-note">For an ideal current source, enter its parallel resistance as Z. A branch with Z = 0 is not supported.</p>
+    </div>
+</dialog>
