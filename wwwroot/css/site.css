@@ -213,3 +213,31 @@ dialog::backdrop { background: oklch(15% 0 0 / .55); backdrop-filter: blur(3px);
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+.node-delete {
+    cursor: pointer;
+}
+
+    .node-delete circle {
+        fill: #dc3545;
+        stroke: white;
+        stroke-width: 1.5;
+    }
+
+.node-delete-text {
+    fill: white;
+    font-size: 17px;
+    font-weight: bold;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.node-count-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .node-count-control input {
+        width: 70px;
+    }
